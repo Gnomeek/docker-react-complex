@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t akizhao/docker-react-complex -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true akizhao/docker-react-complex npm test -- --coverage
+
+after_success:
+  - docker build -t akizhao/multi-client ./client
+  - docker build -t akizhao/multi-nginx ./nginx
+  - docker build -t akizhao/multi-server ./server
+  - docker build -t akizhao/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push akizhao/multi-client
+  - docker push akizhao/multi-nginx
+  - docker push akizhao/multi-server
+  - docker push akizhao/multi-worker
